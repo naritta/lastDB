@@ -1,3 +1,6 @@
+
+extern crate yaml_rust;
+use yaml_rust::{YamlLoader, YamlEmitter};
 use std::collections::HashMap;
 
 // fn main() {
@@ -24,7 +27,18 @@ use std::collections::HashMap;
 
 use std::io::{self, Read, Write, stdout};
 
-fn getValue(reader: &mut Read, writer: &mut Write) {
+fn getValue(reader: &mut dyn Read, writer: &mut dyn Write) {
+    let s =
+"
+foo:
+    - list1
+    - list2
+bar:
+    - 1
+    - 2.0
+";
+    let docs = YamlLoader::load_from_str(s).unwrap();
+
     let mut kv = HashMap::new();
 
     kv.insert(String::from("a"), String::from("Yellow"));
