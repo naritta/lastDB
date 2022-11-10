@@ -2,73 +2,24 @@
 extern crate yaml_rust;
 use yaml_rust::{YamlLoader, YamlEmitter};
 use std::collections::HashMap;
-
-// fn main() {
-//     let mut kv = HashMap::new();
-//
-//     kv.insert(String::from("Blue"), 10);
-//     kv.insert(String::from("Yellow"), 50);
-//
-//     for (key, value) in &scores {
-//         println!("{}: {}", key, value);
-//     }
-//
-//     let r = io::stdin();
-//     let mut reader = r.lock();
-//
-//     let w = io::stdout();
-//     let mut writer = w.lock();
-//
-//     writeln!(writer, "yes").unwrap();
-//     //
-//     // let _ = io::copy(&mut reader, &mut writer);
-//     // writer.write("hello");
-// }
+use std::fs;
 
 use std::io::{self, Read, Write, stdout};
 
-fn getValue(reader: &mut dyn Read, writer: &mut dyn Write) {
-    let s =
-"
-foo:
-    - list1
-    - list2
-bar:
-    - 1
-    - 2.0
-";
-    let docs = YamlLoader::load_from_str(s).unwrap();
-
-    let mut kv = HashMap::new();
-
-    kv.insert(String::from("a"), String::from("Yellow"));
-    kv.insert(String::from("b"), String::from("Blue"));
-
-    const BUFFER_SIZE: usize = 32 * 1024;
-    let mut buf = String::new();
-
-    loop {
-        let mut key = String::new();
-        io::stdin()
-            .read_line(&mut key)
-            .expect("failed");
-        print!("{}", key);
-        let val = kv.get(&key).unwrap();
-        writeln!(writer, "{}", val);
-    }
-
-    // while let Ok(n) = reader.read(&mut buf) {
-    //     if n == 0 {
-    //         break;
-    //     }
-    //     let key = String::from("a");
-    //     let val = kv.get(&key).unwrap();
-    //     writeln!(writer, "{}", val);
-    //     // let _ = writer.write(val.as_bytes());
-    // }
+fn load_yaml(path: &str) -> Vec<yaml_rust::Yaml> {
+    let f = fs::read_to_string(path);
+    let s = f.unwrap().to_string();
+    let docs = YamlLoader::load_from_str(&s).unwrap();
+    docs
 }
 
 fn main() {
+    let path = "./src/main.yml";
+    let docs = load_yaml(&path);
+    let doc = &docs[0];
+
+    println!("MAX memory size:{}", doc["setting"][0]["max_memory"].as_i64().unwrap());
+
     let mut kv = HashMap::new();
 
     kv.insert(String::from("a"), String::from("Yellow"));
