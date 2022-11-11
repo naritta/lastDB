@@ -1,5 +1,6 @@
 setting:
-    - max_memory: 32768
+    max_memory: 32768
+    mode: server
 default:
     - key1: value1
     - key2: value2
