@@ -4,7 +4,7 @@ use yaml_rust::{YamlLoader, YamlEmitter};
 use std::collections::HashMap;
 use std::fs;
 use std::net::TcpListener;
-
+use std::{thread, time};
 use std::io::{self, Read, Write, BufReader,BufRead, stdout};
 
 fn load_yaml(path: &str) -> Vec<yaml_rust::Yaml> {
@@ -66,41 +66,50 @@ fn server_run() {
     kv.insert(String::from("b"), String::from("Blue"));
 
     let server = TcpListener::bind("127.0.0.1:7878").unwrap();
-    server.set_nonblocking(false).expect("out of service");
-    if let Ok((client,address)) = server.accept() {
-        let mut socket = client.try_clone().unwrap();
-        let mut reader = BufReader::new(client);
-        let mut rcv_data = String::new();
-        if let Ok(v) =  reader.read_line(&mut rcv_data) {
-            if v > 0 {
-                println!("request: {}",rcv_data);
-                let mut split_input = rcv_data.split_whitespace();
-                let mut rcv_data = "";
-                match split_input.next() {
-                    Some("set") => match split_input.next() {
-                        Some(key) => match split_input.next() {
-                            Some(val) => {
-                                kv.insert(String::from(key), String::from(val));
-                                println!("set {key}:{val}.");
+    server.set_nonblocking(true).expect("out of service");
+    server.set_ttl(100).expect("could not set TTL");
+    let second = time::Duration::from_millis(1000);
+    loop {
+        println!("waiting connection...");
+        thread::sleep(second);
+        if let Ok((client,address)) = server.accept() {
+            println!("accepted");
+            let mut socket = client.try_clone().unwrap();
+            let mut reader = BufReader::new(client);
+            let mut rcv_data = String::new();
+            println!("waiting read...");
+            thread::sleep(second);
+            if let Ok(v) =  reader.read_line(&mut rcv_data) {
+                if v > 0 {
+                    println!("request: {}",rcv_data);
+                    let mut split_input = rcv_data.split_whitespace();
+                    let mut rcv_data = "";
+                    match split_input.next() {
+                        Some("set") => match split_input.next() {
+                            Some(key) => match split_input.next() {
+                                Some(val) => {
+                                    kv.insert(String::from(key), String::from(val));
+                                    println!("set {key}:{val}.");
+                                },
+                                None => println!("no value set.")
                             },
-                            None => println!("no value set.")
+                            None => println!("unreviewed.")
                         },
-                        None => println!("unreviewed.")
-                    },
-                    Some("get") =>match split_input.next() {
-                        Some(key) => match kv.get(key) {
-                            Some(val) => rcv_data = val,
-                            None => println!("no value found fpr {key}.")
+                        Some("get") =>match split_input.next() {
+                            Some(key) => match kv.get(key) {
+                                Some(val) => rcv_data = val,
+                                None => println!("no value found fpr {key}.")
+                            },
+                            None => println!("unreviewed.")
                         },
+                        Some(key) =>println!("unreviewed."),
                         None => println!("unreviewed.")
-                    },
-                    Some(key) =>println!("unreviewed."),
-                    None => println!("unreviewed.")
-                }
-                let response = String::from(format!("{}",rcv_data)).into_bytes();
-                match socket.write_all(&response) {
-                    Ok(()) => println!("client response success"),
-                    Err(v) => println!("client response failed:{}",v),
+                    }
+                    let response = String::from(format!("{}",rcv_data)).into_bytes();
+                    match socket.write_all(&response) {
+                        Ok(()) => println!("client response success"),
+                        Err(v) => println!("client response failed:{}",v),
+                    }
                 }
             }
         }
