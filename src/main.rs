@@ -4,6 +4,7 @@ use yaml_rust::{YamlLoader, YamlEmitter};
 use std::collections::HashMap;
 use std::fs;
 use std::net::TcpListener;
+use std::net::TcpStream;
 use std::{thread, time};
 use std::io::{self, Read, Write, BufReader,BufRead, stdout};
 
@@ -59,6 +60,53 @@ fn local_run() {
     }
 }
 
+fn handle_client(client: TcpStream) {
+    let mut kv = HashMap::new();
+
+    kv.insert(String::from("a"), String::from("Yellow"));
+    kv.insert(String::from("b"), String::from("Blue"));
+
+    let mut socket = client.try_clone().unwrap();
+    let mut reader = BufReader::new(client);
+    let mut rcv_data = String::new();
+    println!("waiting read...");
+    let second = time::Duration::from_millis(1000);
+    thread::sleep(second);
+    if let Ok(v) =  reader.read_line(&mut rcv_data) {
+        if v > 0 {
+            println!("request: {}",rcv_data);
+            let mut split_input = rcv_data.split_whitespace();
+            let mut rcv_data = "";
+            match split_input.next() {
+                Some("set") => match split_input.next() {
+                    Some(key) => match split_input.next() {
+                        Some(val) => {
+                            // kv.insert(String::from(key), String::from(val));
+                            println!("set {key}:{val}.");
+                        },
+                        None => println!("no value set.")
+                    },
+                    None => println!("unreviewed.")
+                },
+                Some("get") =>match split_input.next() {
+                    Some(key) => match kv.get(key) {
+                        Some(val) => rcv_data = val,
+                        None => println!("no value found fpr {key}.")
+                    },
+                    None => println!("unreviewed.")
+                },
+                Some(key) =>println!("unreviewed."),
+                None => println!("unreviewed.")
+            }
+            let response = String::from(format!("{}",rcv_data)).into_bytes();
+            match socket.write_all(&response) {
+                Ok(()) => println!("client response success"),
+                Err(v) => println!("client response failed:{}",v),
+            }
+        }
+    }
+}
+
 fn server_run() {
     let mut kv = HashMap::new();
 
@@ -69,49 +117,17 @@ fn server_run() {
     server.set_nonblocking(true).expect("out of service");
     server.set_ttl(100).expect("could not set TTL");
     let second = time::Duration::from_millis(1000);
+    let bkv = &kv;
     loop {
         println!("waiting connection...");
         thread::sleep(second);
         if let Ok((client,address)) = server.accept() {
+            std::thread::spawn(move || {
+                handle_client(client);
+            });
+
             println!("accepted");
-            let mut socket = client.try_clone().unwrap();
-            let mut reader = BufReader::new(client);
-            let mut rcv_data = String::new();
-            println!("waiting read...");
-            thread::sleep(second);
-            if let Ok(v) =  reader.read_line(&mut rcv_data) {
-                if v > 0 {
-                    println!("request: {}",rcv_data);
-                    let mut split_input = rcv_data.split_whitespace();
-                    let mut rcv_data = "";
-                    match split_input.next() {
-                        Some("set") => match split_input.next() {
-                            Some(key) => match split_input.next() {
-                                Some(val) => {
-                                    kv.insert(String::from(key), String::from(val));
-                                    println!("set {key}:{val}.");
-                                },
-                                None => println!("no value set.")
-                            },
-                            None => println!("unreviewed.")
-                        },
-                        Some("get") =>match split_input.next() {
-                            Some(key) => match kv.get(key) {
-                                Some(val) => rcv_data = val,
-                                None => println!("no value found fpr {key}.")
-                            },
-                            None => println!("unreviewed.")
-                        },
-                        Some(key) =>println!("unreviewed."),
-                        None => println!("unreviewed.")
-                    }
-                    let response = String::from(format!("{}",rcv_data)).into_bytes();
-                    match socket.write_all(&response) {
-                        Ok(()) => println!("client response success"),
-                        Err(v) => println!("client response failed:{}",v),
-                    }
-                }
-            }
+
         }
     }
 }
