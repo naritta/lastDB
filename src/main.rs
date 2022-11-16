@@ -8,6 +8,20 @@ use std::net::TcpStream;
 use std::{thread, time};
 use std::io::{self, Read, Write, BufReader,BufRead, stdout};
 
+pub struct KV {
+    kv: HashMap<String, String>
+}
+
+impl KV {
+    pub fn add(&mut self) {
+        self.kv.insert(String::from("a"), String::from("Yellow"));
+    }
+
+    pub fn get(&mut self, key: String) -> std::option::Option<String> {
+        return self.kv.get(&key).cloned();
+    }
+}
+
 fn load_yaml(path: &str) -> Vec<yaml_rust::Yaml> {
     let f = fs::read_to_string(path);
     let s = f.unwrap().to_string();
@@ -18,8 +32,8 @@ fn load_yaml(path: &str) -> Vec<yaml_rust::Yaml> {
 fn local_run() {
     let mut kv = HashMap::new();
 
-    kv.insert(String::from("a"), String::from("Yellow"));
-    kv.insert(String::from("b"), String::from("Blue"));
+    // kv.insert(String::from("a"), String::from("Yellow"));
+    // kv.insert(String::from("b"), String::from("Blue"));
 
     const BUFFER_SIZE: usize = 32 * 1024;
     let mut buf = String::new();
@@ -61,7 +75,9 @@ fn local_run() {
 }
 
 fn handle_client(client: TcpStream) {
+// fn handle_client(client: TcpStream, kv: HashMap<&str, &str>)
     let mut kv = HashMap::new();
+    // let kv2 = KV{kv: kv};
 
     kv.insert(String::from("a"), String::from("Yellow"));
     kv.insert(String::from("b"), String::from("Blue"));
@@ -108,10 +124,11 @@ fn handle_client(client: TcpStream) {
 }
 
 fn server_run() {
-    let mut kv = HashMap::new();
+    // let mut kv = HashMap::new();
+    let mut kv: HashMap<&str, &str> = HashMap::new();
 
-    kv.insert(String::from("a"), String::from("Yellow"));
-    kv.insert(String::from("b"), String::from("Blue"));
+    // kv.insert(String::from("a"), String::from("Yellow"));
+    // kv.insert(String::from("b"), String::from("Blue"));
 
     let server = TcpListener::bind("127.0.0.1:7878").unwrap();
     server.set_nonblocking(true).expect("out of service");
