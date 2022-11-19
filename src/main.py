@@ -72,11 +72,11 @@ class BTree:
                 node.keys.append(L+n*i)
                 enode = self.initialize(L=L+n*(i-1), R=L+n*i)
                 node.child.append(enode)
-            enode = self.initialize(L=L+n*D, R=R)
+            enode = self.initialize(L=L+n*(D-1), R=R)
             node.child.append(enode)
         else:
             node = BTreeNode(True)
-            print(L, R)
+            # print(L, R)
             for i in range(L+1, R):
                 node.keys.append(i)
         print(node.keys, node.child)
