@@ -5,7 +5,7 @@ class BTreeNode:
         self.child = []
 
 class BTree:
-    def __init__(self, t):
+    def __init__(self, t=10):
         self.root = BTreeNode(True)
         self.t = t
 
@@ -64,10 +64,27 @@ class BTree:
             for i in x.child:
                 self.print_tree(i, l)
 
+    def initialize(self, L=0, R=18, D=3):
+        if R-L > D:
+            node = BTreeNode(False)
+            n = int((R-L)/D)
+            for i in range(1, D):
+                node.keys.append(L+n*i)
+                enode = self.initialize(L=L+n*(i-1), R=L+n*i)
+                node.child.append(enode)
+            enode = self.initialize(L=L+n*D, R=R)
+            node.child.append(enode)
+        else:
+            node = BTreeNode(True)
+            print(L, R)
+            for i in range(L+1, R):
+                node.keys.append(i)
+        print(node.keys, node.child)
+        return node
 
 def main():
-    btree = BTreeNode(False)
-    print(btree)
+    btree = BTree()
+    btree.initialize()
 
 if __name__ == "__main__":
     main()
