@@ -5,9 +5,13 @@ class BTreeNode:
         self.child = []
 
 class BTree:
-    def __init__(self, t=10):
+    def __init__(self, t=10, N=15):
         self.root = BTreeNode(True)
+        self.refarr = [i for i in range(15)]
         self.t = t
+
+    def init_refarr(self, arr):
+        self.refarr = arr
 
     # Insert node
     def insert(self, k):
@@ -53,18 +57,15 @@ class BTree:
             z.child = y.child[t: 2 * t]
             y.child = y.child[0: t - 1]
 
-    # Print the tree
-    def print_tree(self, x, l=0):
-        print("Level ", l, " ", len(x.keys), end=":")
-        for i in x.keys:
-            print(i, end=" ")
-        print()
-        l += 1
-        if len(x.child) > 0:
-            for i in x.child:
-                self.print_tree(i, l)
+    def dump_tree(self):
+        que = [self.root]
+        while que:
+            node = que.pop(0)
+            print(node.keys)
+            for childNode in node.child:
+                que.append(childNode)
 
-    def initialize(self, L=0, R=18, D=3):
+    def initialize(self, L=0, R=15, D=3):
         if R-L > D:
             node = BTreeNode(False)
             n = int((R-L)/D)
@@ -79,12 +80,14 @@ class BTree:
             # print(L, R)
             for i in range(L+1, R):
                 node.keys.append(i)
-        print(node.keys, node.child)
+        # print([self.refarr[key] for key in node.keys], node.child)
         return node
 
 def main():
     btree = BTree()
-    btree.initialize()
+    btree.init_refarr([1, 2, 4, 6, 8, 10, 12, 13, 15, 16, 17, 18, 20, 22, 25])
+    btree.root = btree.initialize()
+    btree.dump_tree()
 
 if __name__ == "__main__":
     main()
