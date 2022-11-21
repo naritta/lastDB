@@ -15,6 +15,18 @@ class BTree:
     def init_refarr(self, arr):
         self.refarr = arr
 
+    def delete_node(self, val):
+        current_node = self.root
+        while current_node:
+            i = bisect.bisect_left(current_node.keys, val)
+            if current_node.keys[i] == val:
+                current_node.keys.remove(val)
+            else:
+                current_node = current_node.child[i]
+                if current_node.leaf:
+                    current_node = None
+                    print("Not found.")
+
     def insert_node(self, val, node = None, MAX_NODE=2):
         if not node:
             node = self.root
@@ -90,7 +102,8 @@ def main():
     btree.init_refarr([1, 2, 4, 6, 8, 10, 12, 13, 15, 16, 17, 18, 20, 22, 25])
     btree.root = btree.initialize()
     # btree.dump_tree()
-    btree.insert_node(15)
+    # btree.insert_node(15)
+    btree.delete_node(1)
     btree.dump_tree()
 
 if __name__ == "__main__":
