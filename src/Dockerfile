@@ -7,6 +7,8 @@ RUN apt update && \
     apt clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /consumer
-RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY ./app ./app
-CMD ["python", "-m", "app"]
+WORKDIR ./app
+
+RUN pip install --upgrade pip && pip install -r requirements.txt
+CMD ["python", "kafka_producer.py"]
